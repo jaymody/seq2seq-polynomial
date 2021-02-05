@@ -1,62 +1,47 @@
 import re
-import random
-
-from tqdm import tqdm
-from torchtext.data import Dataset, Example, Field, BucketIterator
-
-from utils import get_device
-
-device = get_device()
 
 
-def tokenize(text):
-    return re.findall(r"sin|cos|tan|\d|\w|\(|\)|\+|-|\*+", text)
+class Language:
+    PAD_idx = 0
+    SOS_idx = 1
+    EOS_idx = 2
+    UNK_idx = 3
+
+    def __init__(self):
+        self.word2count = {}
+        self.word2index = {"<pad>": 0, "<sos>": 1, "<eos>": 2, "<unk>": 3}
+        self.index2word = {v: k for k, v in self.word2index.items()}
+        self.n_words = 4
+        self.max_length = 0
+
+    def sentence_to_words(self, sentence):
+        raise NotImplementedError()
+
+    def words_to_sentence(self, words):
+        raise NotImplementedError()
+
+    def add_sentence(self, sentence):
+        words = self.sentence_to_words(sentence)
+
+        if len(words) > self.max_length:
+            self.max_length = len(words)
+
+        for word in words:
+            self.add_word(word)
+
+    def add_word(self, word):
+        if word not in self.word2index:
+            self.word2index[word] = self.n_words
+            self.word2count[word] = 1
+            self.index2word[self.n_words] = word
+            self.n_words += 1
+        else:
+            self.word2count[word] += 1
 
 
-def create_examples(factors, expansions):
-    src = Field(
-        tokenize=tokenize,
-        init_token="<sos>",
-        eos_token="<eos>",
-        lower=True,
-        batch_first=True,
-    )
+class PolynomialLanguage(Language):
+    def sentence_to_words(self, sentence):
+        return re.findall(r"sin|cos|tan|\d|\w|\(|\)|\+|-|\*+", sentence.strip().lower())
 
-    trg = Field(
-        tokenize=tokenize,
-        init_token="<sos>",
-        eos_token="<eos>",
-        lower=True,
-        batch_first=True,
-    )
-
-    examples = []
-    for factor, expansion in tqdm(zip(factors, expansions), desc="creating examples"):
-        examples.append(
-            Example.fromlist([factor, expansion], fields=[("src", src), ("trg", trg)])
-        )
-
-    return examples, src, trg
-
-
-def train_test_split(examples, train_test_split_ratio=0.9):
-    random.shuffle(examples)
-    split = int(train_test_split_ratio * len(examples))
-    train_examples, test_examples = examples[:split], examples[split:]
-    return train_examples, test_examples
-
-
-def create_iterators(train_examples, test_examples, src, trg, batch_size=128):
-    train_data = Dataset(train_examples, fields={"src": src, "trg": trg})
-    test_data = Dataset(test_examples, fields={"src": src, "trg": trg})
-
-    src.build_vocab(train_data, test_data, min_freq=1)
-    trg.build_vocab(train_data, test_data, min_freq=1)
-
-    train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
-        (train_data, test_data, test_data),
-        batch_size=batch_size,
-        sort=False,
-        device=device,
-    )
-    return train_iterator, valid_iterator, test_iterator
+    def words_to_sentence(self, words):
+        return "".join(words)
