@@ -52,7 +52,7 @@ class Collater:
         return src_tensors, trg_tensors
 
 
-class PolynomialDataset(Dataset):
+class Seq2SeqDataset(Dataset):
     def __init__(self, pairs, src_lang, trg_lang):
         def sentence_to_tensor(sentence, lang):
             indexes = [lang.word2index[w] for w in lang.sentence_to_words(sentence)]
@@ -276,8 +276,8 @@ def train(
         pairs, train_test_split_ratio=train_test_split_ratio
     )
 
-    train_dataset = PolynomialDataset(train_pairs, src_lang, trg_lang)
-    test_dataset = PolynomialDataset(test_pairs, src_lang, trg_lang)
+    train_dataset = Seq2SeqDataset(train_pairs, src_lang, trg_lang)
+    test_dataset = Seq2SeqDataset(test_pairs, src_lang, trg_lang)
 
     collate_fn = Collater(src_lang, trg_lang)
     train_dataloader = DataLoader(
