@@ -91,11 +91,15 @@ class Seq2Seq(pl.LightningModule):
     ):
         super().__init__()
 
-        self.input_dim = src_lang.n_words
-        self.output_dim = trg_lang.n_words
+        self.save_hyperparameters()
+        del self.hparams["src_lang"]
+        del self.hparams["trg_lang"]
+
+        self.src_lang = src_lang
+        self.trg_lang = trg_lang
 
         self.encoder = Encoder(
-            self.input_dim,
+            src_lang.n_words,
             hid_dim,
             enc_layers,
             enc_heads,
@@ -105,7 +109,7 @@ class Seq2Seq(pl.LightningModule):
         )
 
         self.decoder = Decoder(
-            self.output_dim,
+            trg_lang.n_words,
             hid_dim,
             dec_layers,
             dec_heads,
@@ -114,12 +118,7 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.src_lang = src_lang
-        self.trg_lang = trg_lang
-
         self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx)
-        self.lr = lr
-
         self.initialize_weights()
         self.to(device)
 
@@ -215,7 +214,7 @@ class Seq2Seq(pl.LightningModule):
         return pred_sentence, pred_words, attention
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
     def training_step(self, batch, batch_idx):
         src, trg = batch
@@ -313,7 +312,7 @@ def train(
         mode="min",
     )
 
-    lim_ratio = 0.03
+    lim_ratio = 1.00
     trainer = pl.Trainer(
         default_root_dir=dirpath,  # set directory to save weights, logs, etc ...
         gpus=1,  # num gpus to use if using gpu
@@ -324,7 +323,7 @@ def train(
         limit_train_batches=lim_ratio,  # percentage of train data to use
         limit_val_batches=lim_ratio,  # percentage of validation data to use
         limit_test_batches=1.00,  # percentage of test data to use
-        val_check_interval=1.0,  # run validation after every n percent of an epoch
+        val_check_interval=0.2,  # run validation after every n percent of an epoch
         precision=32,  # use 16 for half point precision
         callbacks=[checkpoint_callback],
     )
@@ -355,6 +354,6 @@ if __name__ == "__main__":
     parser.add_argument("--file_path", type=str, default="data/train.txt")
     args = parser.parse_args()
 
-    dirpath = "models/another_test"
+    dirpath = "models/run1"
     pairs = load_file(args.file_path)
     train(pairs, dirpath)
