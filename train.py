@@ -261,22 +261,36 @@ class Seq2Seq(pl.LightningModule):
         return self.validation_step(batch, batch_idx)
 
 
-def train(factors, expansions, dirpath):
-    set_seed(1234)
+def train(
+    pairs,
+    dirpath,
+    train_test_split_ratio=0.9,
+    batch_size=128,
+    num_workers=8,
+    seed=1234,
+):
+    set_seed(seed)
 
-    pairs = list(zip(factors, expansions))
     src_lang, trg_lang = create_vocabs(pairs)
-    train_pairs, test_pairs = train_test_split(pairs, train_test_split_ratio=0.9)
+    train_pairs, test_pairs = train_test_split(
+        pairs, train_test_split_ratio=train_test_split_ratio
+    )
 
     train_dataset = PolynomialDataset(train_pairs, src_lang, trg_lang)
     test_dataset = PolynomialDataset(test_pairs, src_lang, trg_lang)
 
     collate_fn = Collater(src_lang, trg_lang)
     train_dataloader = DataLoader(
-        train_dataset, batch_size=128, collate_fn=collate_fn, num_workers=8
+        train_dataset,
+        batch_size=batch_size,
+        collate_fn=collate_fn,
+        num_workers=num_workers,
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=128, collate_fn=collate_fn, num_workers=8
+        test_dataset,
+        batch_size=batch_size,
+        collate_fn=collate_fn,
+        num_workers=num_workers,
     )
 
     save_to_pickle = {
