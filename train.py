@@ -41,6 +41,7 @@ class Collater:
         self.trg_lang = trg_lang
 
     def __call__(self, batch):
+        # TODO: try pack_padded_sequence for faster processing
         src_tensors, trg_tensors = zip(*batch)
         src_tensors = nn.utils.rnn.pad_sequence(
             src_tensors, batch_first=True, padding_value=self.src_lang.PAD_idx
@@ -350,10 +351,14 @@ def train(
 
 
 if __name__ == "__main__":
+    # TODO: add cli for model hparams and trainer hparams and program hparams
     parser = argparse.ArgumentParser("Train the models.")
     parser.add_argument("--file_path", type=str, default="data/train.txt")
     args = parser.parse_args()
 
+    # TODO: seperate data file into train.txt and test.txt to ensure 0 overlap
+    # and allows consitent scoring across models
+    # (write assertions to make sure there is no overlap in the split files)
     dirpath = "models/run1"
     pairs = load_file(args.file_path)
     train(pairs, dirpath)

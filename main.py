@@ -28,6 +28,8 @@ def test(dirpath, model_ckpt, test_pairs=None):
     ).to(device)
 
     total_score = 0
+    # TODO: create predict_batch function to allow faster scoring
+    # that can be quickly run on all examples
     pred_pairs = random.sample(test_pairs, 1000)
     for i, (pred_src, pred_trg) in enumerate(tqdm(pred_pairs, desc="scoring")):
         translation, _, _ = model.predict(pred_src)
