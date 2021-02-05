@@ -315,25 +315,7 @@ def train(factors, expansions, dirpath):
         callbacks=[checkpoint_callback],
     )
     trainer.fit(model, train_dataloader, test_dataloader)
-
-    return model
-
-
-def test(dirpath, model_ckpt="model.ckpt"):
-    with open(os.path.join(dirpath, "src_lang.pickle"), "rb") as fi:
-        src_lang = pickle.load(fi)
-    with open(os.path.join(dirpath, "trg_lang.pickle"), "rb") as fi:
-        trg_lang = pickle.load(fi)
-    with open(os.path.join(dirpath, "test_pairs.pickle"), "rb") as fi:
-        test_pairs = pickle.load(fi)
-
-    model = Seq2Seq.load_from_checkpoint(
-        os.path.join(dirpath, model_ckpt),
-        src_lang=src_lang,
-        trg_lang=trg_lang,
-    ).to(device)
-
-    trainer = pl.Trainer(gpus=1)
+    trainer.test(model, test_dataloader)
 
     total_score = 0
     pred_pairs = random.sample(test_pairs, 1000)
@@ -350,6 +332,8 @@ def test(dirpath, model_ckpt="model.ckpt"):
             print(f"score = {pred_score}")
 
     print(f"{total_score}/{len(pred_pairs)} = {total_score/len(pred_pairs)}")
+
+    return model
 
 
 if __name__ == "__main__":
