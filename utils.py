@@ -7,8 +7,8 @@ import numpy as np
 
 def load_file(file_path):
     data = open(file_path, "r").readlines()
-    factors, expansions = zip(*[line.strip().split("=") for line in data])
-    return factors, expansions
+    pairs = [line.strip().split("=") for line in data]
+    return pairs
 
 
 def score(true_expansion, pred_expansion):

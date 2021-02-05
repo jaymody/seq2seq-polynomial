@@ -358,6 +358,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dirpath = "models/another_test"
-    factors, expansions = load_file(args.file_path)
-    train(factors, expansions, dirpath)
-    test(dirpath)
+    pairs = load_file(args.file_path)
+    train(pairs, dirpath)
