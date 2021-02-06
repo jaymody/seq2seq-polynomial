@@ -378,6 +378,6 @@ if __name__ == "__main__":
     # TODO: seperate data file into train.txt and test.txt to ensure 0 overlap
     # and allows consitent scoring across models
     # (write assertions to make sure there is no overlap in the split files)
-    dirpath = "models/run1"
-    pairs = load_file(args.file_path)
-    train(pairs, dirpath)
+    _dirpath = "models/run1"
+    _pairs = load_file(args.file_path)
+    train(_pairs, _dirpath)
