@@ -394,7 +394,7 @@ class Seq2Seq(pl.LightningModule):
 def train(
     pairs,
     dirpath,
-    train_test_split_ratio=0.9,
+    train_val_split_ratio=0.95,
     batch_size=128,
     num_workers=8,
     seed=1234,
@@ -403,7 +403,7 @@ def train(
 
     src_lang, trg_lang = create_vocabs(pairs)
     train_pairs, val_pairs = train_test_split(
-        pairs, train_test_split_ratio=train_test_split_ratio
+        pairs, train_test_split_ratio=train_val_split_ratio
     )
 
     train_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
