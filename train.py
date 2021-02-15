@@ -473,7 +473,7 @@ def train(
     if test_pairs:
         final_score = evaluate(model, test_pairs, batch_size=batch_size)
         with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
-            fo.write(f"{final_score:.4f}")
+            fo.write(f"{final_score:.4f}\n")
 
     return model
 
