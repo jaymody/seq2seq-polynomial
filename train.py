@@ -294,12 +294,12 @@ def train(
     set_seed(seed)
 
     src_lang, trg_lang = create_vocabs(pairs)
-    train_pairs, test_pairs = train_test_split(
+    train_pairs, val_pairs = train_test_split(
         pairs, train_test_split_ratio=train_test_split_ratio
     )
 
     train_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
-    test_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
+    val_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
 
     collate_fn = Collater(src_lang, trg_lang)
     train_dataloader = DataLoader(
@@ -308,8 +308,8 @@ def train(
         collate_fn=collate_fn,
         num_workers=num_workers,
     )
-    test_dataloader = DataLoader(
-        SimpleDataset(test_tensors),
+    val_dataloader = DataLoader(
+        SimpleDataset(val_tensors),
         batch_size=batch_size,
         collate_fn=collate_fn,
         num_workers=num_workers,
@@ -319,7 +319,7 @@ def train(
         "src_lang.pickle": src_lang,
         "trg_lang.pickle": trg_lang,
         "train_pairs.pickle": train_pairs,
-        "test_pairs.pickle": test_pairs,
+        "val_pairs.pickle": val_pairs,
     }
     for k, v in save_to_pickle.items():
         with open(os.path.join(dirpath, k), "wb") as fo:
@@ -350,11 +350,11 @@ def train(
         precision=32,  # use 16 for half point precision
         callbacks=[checkpoint_callback],
     )
-    trainer.fit(model, train_dataloader, test_dataloader)
-    trainer.test(model, test_dataloader)
+    trainer.fit(model, train_dataloader, val_dataloader)
+    trainer.test(model, val_dataloader)
 
     total_score = 0
-    pred_pairs = random.sample(test_pairs, 1000)
+    pred_pairs = random.sample(val_pairs, 1000)
     for i, (pred_src, pred_trg) in enumerate(tqdm(pred_pairs, desc="scoring")):
         translation, _, _ = model.predict(pred_src)
         pred_score = score(pred_trg, translation)
