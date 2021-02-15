@@ -52,26 +52,29 @@ class Collater:
         return src_tensors, trg_tensors
 
 
-class Seq2SeqDataset(Dataset):
-    def __init__(self, pairs, src_lang, trg_lang):
-        def sentence_to_tensor(sentence, lang):
-            indexes = [lang.word2index[w] for w in lang.sentence_to_words(sentence)]
-            indexes = [lang.SOS_idx] + indexes + [lang.EOS_idx]
-            return torch.LongTensor(indexes)
+def sentence_to_tensor(sentence, lang):
+    indexes = [lang.word2index[w] for w in lang.sentence_to_words(sentence)]
+    indexes = [lang.SOS_idx] + indexes + [lang.EOS_idx]
+    return torch.LongTensor(indexes)
 
-        self.src_tensors, self.trg_tensors = zip(
-            *[
-                (sentence_to_tensor(src, src_lang), sentence_to_tensor(trg, trg_lang))
-                for src, trg in tqdm(pairs, desc="creating dataset")
-            ]
-        )
-        assert len(self.src_tensors) == len(self.trg_tensors)
 
-    def __len__(self):
-        return len(self.src_tensors)
+def pairs_to_tensors(pairs, src_lang, trg_lang):
+    tensors = [
+        (sentence_to_tensor(src, src_lang), sentence_to_tensor(trg, trg_lang))
+        for src, trg in tqdm(pairs, desc="creating tensors")
+    ]
+    return tensors
+
+
+class SimpleDataset(Dataset):
+    def __init__(self, data):
+        self.data = data
 
     def __getitem__(self, index):
-        return self.src_tensors[index], self.trg_tensors[index]
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
 
 
 class Seq2Seq(pl.LightningModule):
@@ -295,18 +298,18 @@ def train(
         pairs, train_test_split_ratio=train_test_split_ratio
     )
 
-    train_dataset = Seq2SeqDataset(train_pairs, src_lang, trg_lang)
-    test_dataset = Seq2SeqDataset(test_pairs, src_lang, trg_lang)
+    train_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
+    test_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
 
     collate_fn = Collater(src_lang, trg_lang)
     train_dataloader = DataLoader(
-        train_dataset,
+        SimpleDataset(train_tensors),
         batch_size=batch_size,
         collate_fn=collate_fn,
         num_workers=num_workers,
     )
     test_dataloader = DataLoader(
-        test_dataset,
+        SimpleDataset(test_tensors),
         batch_size=batch_size,
         collate_fn=collate_fn,
         num_workers=num_workers,
