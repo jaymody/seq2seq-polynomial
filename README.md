@@ -12,3 +12,25 @@ The expanded expressions are commutable, but only the form provided is considere
 
 ## Model Accuracy
 The model is evaluated against a strict string equality between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of`0.86`.
+
+
+## Instructions
+Split into train and test set:
+```
+python data.py
+```
+
+Train the model:
+```
+python train.py
+```
+
+Evaluate model on test set:
+```
+python main.py
+```
+
+Run unit tests:
+```
+python -m unittest tests.py
+```
