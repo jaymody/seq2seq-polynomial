@@ -375,7 +375,7 @@ def train(
 if __name__ == "__main__":
     # TODO: add cli for model hparams and trainer hparams and program hparams
     parser = argparse.ArgumentParser("Train the models.")
-    parser.add_argument("--file_path", type=str, default="data/train.txt")
+    parser.add_argument("--file_path", type=str, default="data/train_set.txt")
     args = parser.parse_args()
 
     # TODO: seperate data file into train.txt and test.txt to ensure 0 overlap
