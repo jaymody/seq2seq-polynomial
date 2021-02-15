@@ -2,7 +2,8 @@
 import argparse
 
 from train import evaluate, load_model
-from utils import load_file, set_seed
+from data import PolynomialLanguage
+from utils import set_seed
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -13,6 +14,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     set_seed(args.seed)
-    pairs = load_file(args.data_path)
+    pairs = PolynomialLanguage.load_pairs(args.data_path)
     model = load_model(args.dirpath, args.model_ckpt)
     evaluate(model, pairs)

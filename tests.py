@@ -15,10 +15,9 @@ class Tests(unittest.TestCase):
 
     def test_polynomial_lang(self):
         """Tests PolynomialLang class."""
-        from utils import load_file
         from data import PolynomialLanguage
 
-        pairs = load_file("data/train.txt")
+        pairs = PolynomialLanguage.load_pairs("data/train.txt")
         lang = PolynomialLanguage()
 
         for src, trg in pairs:

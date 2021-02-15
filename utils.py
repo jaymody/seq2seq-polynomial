@@ -5,12 +5,6 @@ import torch
 import numpy as np
 
 
-def load_file(file_path):
-    with open(file_path) as fi:
-        pairs = [line.strip().split("=") for line in fi]
-    return pairs
-
-
 def score(true_expansion, pred_expansion):
     return int(true_expansion == pred_expansion)
 

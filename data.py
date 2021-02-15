@@ -48,6 +48,16 @@ class PolynomialLanguage(Language):
     def words_to_sentence(self, words):
         return "".join(words)
 
+    @staticmethod
+    def load_pairs(filepath, reverse=False):
+        with open(filepath) as fi:
+            pairs = [line.strip().split("=") for line in fi]
+
+        if reverse:
+            pairs = [(b, a) for a, b in pairs]
+
+        return pairs
+
 
 def train_test_split(pairs, train_test_split_ratio):
     random.shuffle(pairs)

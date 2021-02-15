@@ -11,7 +11,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
 
 from data import PolynomialLanguage, train_test_split
-from utils import get_device, set_seed, load_file, score
+from utils import get_device, set_seed, score
 from layers import Encoder, Decoder
 
 device = get_device()
@@ -533,8 +533,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     os.makedirs(args.dirpath, exist_ok=False)
-    train_set_pairs = load_file(args.train_path)
-    test_set_pairs = load_file(args.test_path)
+    train_set_pairs = PolynomialLanguage.load_pairs(args.train_path)
+    test_set_pairs = PolynomialLanguage.load_pairs(args.test_path)
     train(
         args.dirpath,
         train_set_pairs,
