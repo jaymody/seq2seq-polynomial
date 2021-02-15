@@ -222,7 +222,7 @@ class Seq2Seq(pl.LightningModule):
 
             output, attention = self.decoder(trg_tensor, enc_src, trg_mask, src_mask)
 
-            # trg_mask = [batch size = 1, cur trg len, output dim]
+            # output = [batch size = 1, cur trg len, output dim]
 
             pred = output.argmax(2)[:, -1].item()
 
