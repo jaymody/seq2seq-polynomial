@@ -11,7 +11,7 @@ from train import Seq2Seq
 device = get_device()
 
 
-def test(dirpath, model_ckpt="model.ckpt", test_pairs=None):
+def evaluate(dirpath, model_ckpt="model.ckpt", test_pairs=None):
     if test_pairs == None:
         with open(os.path.join(dirpath, "test_pairs.pickle"), "rb") as fi:
             src_sentences, trg_sentences = zip(*pickle.load(fi))
@@ -55,4 +55,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pairs = load_file(args.data_path)
-    test(args.dirpath, args.model_ckpt, test_pairs=pairs)
+    evaluate(args.dirpath, args.model_ckpt, test_pairs=pairs)
