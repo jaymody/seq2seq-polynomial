@@ -11,26 +11,31 @@ Implement a deep learning model that learns to expand single variable polynomial
 The expanded expressions are commutable, but only the form provided is considered correct.
 
 ## Model Accuracy
-The model is evaluated against a strict string equality between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of`0.86`.
+The model is evaluated against a strict string equality between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of`0.88`.
 
 
 ## Instructions
-Split into train and test set:
-```
+Split into train and test set (use `--help` for more options):
+```shell
 python data.py
 ```
 
-Train the model:
-```
-python train.py
+Train the model (use `--help` for more options):
+```shell
+python train.py \
+    "models/best" \
+    --gpus 1 \
+    --gradient_clip_val 1 \
+    --max_epochs 10 \
+    --val_check_interval 0.2
 ```
 
-Evaluate model on test set:
-```
+Evaluate model on test set (use `--help` for more options):
+```shell
 python evaluate.py models/best
 ```
 
 Run unit tests:
-```
+```shell
 python -m unittest tests.py
 ```
