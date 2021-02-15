@@ -449,8 +449,6 @@ def train(
     save_to_pickle = {
         "src_lang.pickle": src_lang,
         "trg_lang.pickle": trg_lang,
-        "train_pairs.pickle": train_pairs,
-        "val_pairs.pickle": val_pairs,
     }
     for k, v in save_to_pickle.items():
         with open(os.path.join(dirpath, k), "wb") as fo:
