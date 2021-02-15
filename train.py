@@ -470,6 +470,10 @@ def train(
     )
     trainer.fit(model, train_dataloader, val_dataloader)  # pylint: disable=no-member
 
+    # not sure why, but after trainer.fit, the model is sent to cpu, so we'll
+    # need to send it back to device so evaluate doesn't break
+    model.to(device)
+
     if test_pairs:
         final_score = evaluate(model, test_pairs, batch_size=batch_size)
         with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
