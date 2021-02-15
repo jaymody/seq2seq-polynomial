@@ -188,57 +188,6 @@ class Seq2Seq(pl.LightningModule):
 
         return output, attention
 
-    def predict_sentence(self, sentence):
-        """Predicts a single sentence."""
-        src_indexes = [
-            self.src_lang.word2index[word]
-            for word in self.src_lang.sentence_to_words(sentence)
-        ]
-        src_indexes = [self.src_lang.SOS_idx] + src_indexes + [self.src_lang.EOS_idx]
-
-        # src_indexes = [src len], where src len is len(<sos> sentence <eos>)
-
-        src_tensor = torch.LongTensor(src_indexes).unsqueeze(0).to(self.device)
-
-        # src_tensor = [batch size = 1, src len]
-
-        src_mask = self.make_src_mask(src_tensor)
-
-        # src_mask = [batch size = 1, 1, 1, src len]
-
-        enc_src = self.encoder(src_tensor, src_mask)
-
-        # enc_src = [batch size = 1, src len, hid dim]
-
-        trg_indexes = [self.trg_lang.SOS_idx]
-
-        # trg_indexes = [cur trg len = 1]
-
-        for _ in range(self.hparams.max_len):
-            trg_tensor = torch.LongTensor(trg_indexes).unsqueeze(0).to(self.device)
-
-            # trg_tensor = [1, cur trg len]
-
-            trg_mask = self.make_trg_mask(trg_tensor)
-
-            # trg_mask = [batch size = 1, 1, cur trg len, cur trg len]
-
-            output, attention = self.decoder(trg_tensor, enc_src, trg_mask, src_mask)
-
-            # output = [batch size = 1, cur trg len, output dim]
-
-            pred = output.argmax(2)[:, -1].item()
-
-            if pred == self.trg_lang.EOS_idx:
-                break
-
-            trg_indexes.append(pred)
-
-        pred_words = [self.trg_lang.index2word[i] for i in trg_indexes[1:]]
-        pred_sentence = self.trg_lang.words_to_sentence(pred_words)
-
-        return pred_sentence, pred_words, attention
-
     def predict(self, sentences, batch_size=128):
         """Efficiently predict a list of sentences"""
         pred_tensors = [
