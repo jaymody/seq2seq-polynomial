@@ -1,5 +1,4 @@
-import os
-import pickle
+"""Evaluate model."""
 import argparse
 
 from train import evaluate, load_model
