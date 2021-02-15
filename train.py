@@ -10,7 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
 
-from data import PolynomialLanguage
+from data import PolynomialLanguage, train_test_split
 from utils import get_device, set_seed, load_file, score
 from layers import Encoder, Decoder
 
@@ -26,13 +26,6 @@ def create_vocabs(pairs):
         trg_lang.add_sentence(trg)
 
     return src_lang, trg_lang
-
-
-def train_test_split(pairs, train_test_split_ratio):
-    random.shuffle(pairs)
-    split = int(train_test_split_ratio * len(pairs))
-    train_pairs, test_pairs = pairs[:split], pairs[split:]
-    return train_pairs, test_pairs
 
 
 class Collater:

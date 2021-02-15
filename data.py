@@ -1,4 +1,5 @@
 import re
+import random
 
 
 class Language:
@@ -45,3 +46,10 @@ class PolynomialLanguage(Language):
 
     def words_to_sentence(self, words):
         return "".join(words)
+
+
+def train_test_split(pairs, train_test_split_ratio):
+    random.shuffle(pairs)
+    split = int(train_test_split_ratio * len(pairs))
+    train_pairs, test_pairs = pairs[:split], pairs[split:]
+    return train_pairs, test_pairs
