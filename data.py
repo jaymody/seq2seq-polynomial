@@ -2,6 +2,8 @@ import re
 import random
 import argparse
 
+from tqdm import tqdm
+
 
 class Language:
     PAD_idx = 0
@@ -39,6 +41,18 @@ class Language:
             self.n_words += 1
         else:
             self.word2count[word] += 1
+
+    @classmethod
+    def create_vocabs(cls, pairs, src_kwargs={}, trg_kwargs={}):
+
+        src_lang = cls(**src_kwargs)
+        trg_lang = cls(**trg_kwargs)
+
+        for src, trg in tqdm(pairs, desc="creating vocabs"):
+            src_lang.add_sentence(src)
+            trg_lang.add_sentence(trg)
+
+        return src_lang, trg_lang
 
 
 class PolynomialLanguage(Language):

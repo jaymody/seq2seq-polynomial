@@ -17,17 +17,6 @@ from layers import Encoder, Decoder
 device = get_device()
 
 
-def create_vocabs(pairs):
-    src_lang = PolynomialLanguage()
-    trg_lang = PolynomialLanguage()
-
-    for src, trg in tqdm(pairs, desc="creating vocabs"):
-        src_lang.add_sentence(src)
-        trg_lang.add_sentence(trg)
-
-    return src_lang, trg_lang
-
-
 class Collater:
     def __init__(self, src_lang, trg_lang=None, predict=False):
         self.src_lang = src_lang
@@ -372,7 +361,7 @@ def train(
 ):
     set_seed(seed)
 
-    src_lang, trg_lang = create_vocabs(pairs)
+    src_lang, trg_lang = PolynomialLanguage.create_vocabs(pairs)
     train_pairs, val_pairs = train_test_split(
         pairs, train_test_split_ratio=train_val_split_ratio
     )
