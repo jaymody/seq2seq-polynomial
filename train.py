@@ -471,7 +471,7 @@ def train(
     )
     trainer.fit(model, train_dataloader, val_dataloader)  # pylint: disable=no-member
 
-    if train_pairs:
+    if test_pairs:
         final_score = evaluate(model, test_pairs, batch_size=batch_size)
         with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
             fo.write(f"{final_score:.4f}")
