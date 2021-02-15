@@ -1,6 +1,5 @@
 import os
 import pickle
-import random
 import argparse
 
 import torch
@@ -11,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
 
+from main import evaluate
 from data import PolynomialLanguage, train_test_split
 from utils import get_device, set_seed, load_file, score
 from layers import Encoder, Decoder
@@ -394,6 +394,7 @@ class Seq2Seq(pl.LightningModule):
 def train(
     pairs,
     dirpath,
+    test_pairs=None,
     train_val_split_ratio=0.95,
     batch_size=128,
     num_workers=8,
@@ -443,7 +444,7 @@ def train(
         mode="min",
     )
 
-    lim_ratio = 1.00
+    lim_ratio = 0.01
     trainer = pl.Trainer(
         default_root_dir=dirpath,  # set directory to save weights, logs, etc ...
         gpus=1,  # num gpus to use if using gpu
@@ -453,7 +454,7 @@ def train(
         max_epochs=8,
         limit_train_batches=lim_ratio,  # percentage of train data to use
         limit_val_batches=lim_ratio,  # percentage of validation data to use
-        limit_test_batches=1.00,  # percentage of test data to use
+        limit_test_batches=lim_ratio,  # percentage of test data to use
         val_check_interval=0.2,  # run validation after every n percent of an epoch
         precision=32,  # use 16 for half point precision
         callbacks=[checkpoint_callback],
@@ -461,21 +462,26 @@ def train(
     trainer.fit(model, train_dataloader, val_dataloader)
     trainer.test(model, val_dataloader)
 
+    test_src_sentences, test_trg_sentences = load_file("")
+    prd_sentences, _, _ = model.predict(test_src_sentences, batch_size=batch_size)
     total_score = 0
-    pred_pairs = random.sample(val_pairs, 1000)
-    for i, (pred_src, pred_trg) in enumerate(tqdm(pred_pairs, desc="scoring")):
-        translation, _, _ = model.predict(pred_src)
-        pred_score = score(pred_trg, translation)
+    for i, (src, trg, prd) in enumerate(
+        tqdm(zip(test_src_sentences, test_trg_sentences, prd_sentences), desc="scoring")
+    ):
+        pred_score = score(trg, prd)
         total_score += pred_score
-
         if i < 10:
             print(f"\n\n\n---- Example {i} ----")
-            print(f"src = {pred_src}")
-            print(f"trg = {pred_trg}")
-            print(f"prd = {translation}")
+            print(f"src = {src}")
+            print(f"trg = {trg}")
+            print(f"prd = {prd}")
             print(f"score = {pred_score}")
 
-    print(f"{total_score}/{len(pred_pairs)} = {total_score/len(pred_pairs)}")
+    final_score = total_score / len(prd_sentences)
+    print(f"{total_score}/{len(prd_sentences)} = {final_score:.4f}")
+
+    with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
+        fo.write(f"{final_score:.4f}")
 
     return model
 
@@ -489,6 +495,7 @@ if __name__ == "__main__":
     # TODO: seperate data file into train.txt and test.txt to ensure 0 overlap
     # and allows consitent scoring across models
     # (write assertions to make sure there is no overlap in the split files)
-    _dirpath = "models/run1"
-    _pairs = load_file(args.file_path)
-    train(_pairs, _dirpath)
+    base_dirpath = "models/pbatch_run"
+    train_set_pairs = load_file(args.file_path)
+    test_set_pairs = load_file("data/test_set.txt")
+    train(train_set_pairs, base_dirpath, test_pairs=test_set_pairs)
