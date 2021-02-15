@@ -471,7 +471,7 @@ def train(
         default_root_dir=dirpath,
         callbacks=[checkpoint_callback],
     )
-    trainer.fit(model, train_dataloader, val_dataloader)
+    trainer.fit(model, train_dataloader, val_dataloader)  # pylint: disable=no-member
 
     if train_pairs:
         final_score = evaluate(model, test_pairs, batch_size=batch_size)
