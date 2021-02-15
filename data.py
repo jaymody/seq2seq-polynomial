@@ -72,10 +72,10 @@ if __name__ == "__main__":
         train_pairs, test_pairs = train_test_split(pairs, args.ratio)
 
     with open(args.trainpath, "w") as fo:
-        fo.write("\n".join(train_pairs))
+        fo.write("\n".join(train_pairs) + "\n")
 
     with open(args.testpath, "w") as fo:
-        fo.write("\n".join(test_pairs))
+        fo.write("\n".join(test_pairs) + "\n")
 
     print(f"num pairs:          {len(pairs)}")
     print(f"num train pairs:    {len(train_pairs)}")
