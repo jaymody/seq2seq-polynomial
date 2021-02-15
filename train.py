@@ -461,17 +461,17 @@ def train(
     trainer.test(model, val_dataloader)
 
     test_set_pairs = load_file("data/test_set.txt")
-    final_score = evaluate(model, test_set_pairs)
+    final_score = evaluate(model, test_set_pairs, batch_size=batch_size)
     with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
         fo.write(f"{final_score:.4f}")
 
     return model
 
 
-def evaluate(model, test_pairs):
+def evaluate(model, test_pairs, batch_size=128):
     src_sentences, trg_sentences = zip(*test_pairs)
 
-    prd_sentences, _, _ = model.predict(src_sentences, batch_size=512)
+    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size)
     assert len(prd_sentences) == len(src_sentences) == len(trg_sentences)
 
     total_score = 0
