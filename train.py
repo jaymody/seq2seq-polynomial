@@ -239,7 +239,7 @@ class Seq2Seq(pl.LightningModule):
 
         return pred_sentence, pred_words, attention
 
-    def predict(self, sentences, batch_size=128, num_workers=1):
+    def predict(self, sentences, batch_size=128):
         """Efficiently predict a list of sentences"""
         pred_tensors = [
             sentence_to_tensor(sentence, self.src_lang)
@@ -251,7 +251,6 @@ class Seq2Seq(pl.LightningModule):
             SimpleDataset(pred_tensors),
             batch_size=batch_size,
             collate_fn=collate_fn,
-            num_workers=num_workers,
         )
 
         sentences = []
