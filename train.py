@@ -10,7 +10,6 @@ from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
 
-from main import evaluate
 from data import PolynomialLanguage, train_test_split
 from utils import get_device, set_seed, load_file, score
 from layers import Encoder, Decoder
@@ -394,7 +393,6 @@ class Seq2Seq(pl.LightningModule):
 def train(
     pairs,
     dirpath,
-    test_pairs=None,
     train_val_split_ratio=0.95,
     batch_size=128,
     num_workers=8,
@@ -408,7 +406,7 @@ def train(
     )
 
     train_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
-    val_tensors = pairs_to_tensors(train_pairs, src_lang, trg_lang)
+    val_tensors = pairs_to_tensors(val_pairs, src_lang, trg_lang)
 
     collate_fn = Collater(src_lang, trg_lang)
     train_dataloader = DataLoader(
@@ -444,7 +442,7 @@ def train(
         mode="min",
     )
 
-    lim_ratio = 0.01
+    lim_ratio = 1.00
     trainer = pl.Trainer(
         default_root_dir=dirpath,  # set directory to save weights, logs, etc ...
         gpus=1,  # num gpus to use if using gpu
@@ -462,11 +460,27 @@ def train(
     trainer.fit(model, train_dataloader, val_dataloader)
     trainer.test(model, val_dataloader)
 
-    test_src_sentences, test_trg_sentences = load_file("")
-    prd_sentences, _, _ = model.predict(test_src_sentences, batch_size=batch_size)
+    test_set_pairs = load_file("data/test_set.txt")
+    final_score = evaluate(model, test_set_pairs)
+    with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
+        fo.write(f"{final_score:.4f}")
+
+    return model
+
+
+def evaluate(model, test_pairs):
+    src_sentences, trg_sentences = zip(*test_pairs)
+
+    prd_sentences, _, _ = model.predict(src_sentences, batch_size=512)
+    assert len(prd_sentences) == len(src_sentences) == len(trg_sentences)
+
     total_score = 0
     for i, (src, trg, prd) in enumerate(
-        tqdm(zip(test_src_sentences, test_trg_sentences, prd_sentences), desc="scoring")
+        tqdm(
+            zip(src_sentences, trg_sentences, prd_sentences),
+            desc="scoring",
+            total=len(src_sentences),
+        )
     ):
         pred_score = score(trg, prd)
         total_score += pred_score
@@ -479,10 +493,19 @@ def train(
 
     final_score = total_score / len(prd_sentences)
     print(f"{total_score}/{len(prd_sentences)} = {final_score:.4f}")
+    return final_score
 
-    with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
-        fo.write(f"{final_score:.4f}")
 
+def load_model(dirpath, model_ckpt="model.ckpt"):
+    with open(os.path.join(dirpath, "src_lang.pickle"), "rb") as fi:
+        src_lang = pickle.load(fi)
+    with open(os.path.join(dirpath, "trg_lang.pickle"), "rb") as fi:
+        trg_lang = pickle.load(fi)
+    model = Seq2Seq.load_from_checkpoint(
+        os.path.join(dirpath, model_ckpt),
+        src_lang=src_lang,
+        trg_lang=trg_lang,
+    ).to(device)
     return model
 
 
@@ -492,10 +515,6 @@ if __name__ == "__main__":
     parser.add_argument("--file_path", type=str, default="data/train_set.txt")
     args = parser.parse_args()
 
-    # TODO: seperate data file into train.txt and test.txt to ensure 0 overlap
-    # and allows consitent scoring across models
-    # (write assertions to make sure there is no overlap in the split files)
     base_dirpath = "models/pbatch_run"
     train_set_pairs = load_file(args.file_path)
-    test_set_pairs = load_file("data/test_set.txt")
-    train(train_set_pairs, base_dirpath, test_pairs=test_set_pairs)
+    train(train_set_pairs, base_dirpath)
