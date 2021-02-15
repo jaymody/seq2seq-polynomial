@@ -36,12 +36,19 @@ def train_test_split(pairs, train_test_split_ratio):
 
 
 class Collater:
-    def __init__(self, src_lang, trg_lang):
+    def __init__(self, src_lang, trg_lang=None, predict=False):
         self.src_lang = src_lang
         self.trg_lang = trg_lang
+        self.predict = predict
 
     def __call__(self, batch):
         # TODO: try pack_padded_sequence for faster processing
+        if self.predict:
+            # batch = src_tensors in predict mode
+            return nn.utils.rnn.pad_sequence(
+                batch, batch_first=True, padding_value=self.src_lang.PAD_idx
+            )
+
         src_tensors, trg_tensors = zip(*batch)
         src_tensors = nn.utils.rnn.pad_sequence(
             src_tensors, batch_first=True, padding_value=self.src_lang.PAD_idx
