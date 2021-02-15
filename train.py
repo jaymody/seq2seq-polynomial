@@ -533,12 +533,11 @@ if __name__ == "__main__":
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
 
-    base_dirpath = "models/best"
-    os.makedirs(base_dirpath, exist_ok=False)
+    os.makedirs(args.dirpath, exist_ok=False)
     train_set_pairs = load_file(args.train_path)
     test_set_pairs = load_file(args.test_path)
     train(
-        base_dirpath,
+        args.dirpath,
         train_set_pairs,
         test_pairs=test_set_pairs,
         train_val_split_ratio=args.train_val_split_ratio,
