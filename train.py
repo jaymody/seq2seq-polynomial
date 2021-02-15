@@ -516,5 +516,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_dirpath = "models/pbatch_run"
+    os.makedirs(base_dirpath, exist_ok=True)
     train_set_pairs = load_file(args.file_path)
     train(train_set_pairs, base_dirpath)
