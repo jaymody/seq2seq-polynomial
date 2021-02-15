@@ -92,6 +92,7 @@ class Seq2Seq(pl.LightningModule):
         enc_dropout=0.1,
         dec_dropout=0.1,
         lr=0.0005,
+        **kwargs,  # throwaway
     ):
         super().__init__()
 
@@ -393,14 +394,31 @@ class Seq2Seq(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
 
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        _parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
+        _parser.add_argument("--hid_dim", type=int, default=256)
+        _parser.add_argument("--enc_layers", type=int, default=3)
+        _parser.add_argument("--dec_layers", type=int, default=3)
+        _parser.add_argument("--enc_heads", type=int, default=8)
+        _parser.add_argument("--dec_heads", type=int, default=8)
+        _parser.add_argument("--enc_pf_dim", type=int, default=512)
+        _parser.add_argument("--dec_pf_dim", type=int, default=512)
+        _parser.add_argument("--enc_dropout", type=float, default=0.1)
+        _parser.add_argument("--dec_dropout", type=float, default=0.1)
+        _parser.add_argument("--lr", type=float, default=0.0005)
+        return _parser
+
 
 def train(
-    pairs,
     dirpath,
+    pairs,
+    test_pairs=None,
     train_val_split_ratio=0.95,
-    batch_size=128,
+    batch_size=512,
     num_workers=8,
     seed=1234,
+    args={},
 ):
     set_seed(seed)
 
@@ -436,7 +454,7 @@ def train(
         with open(os.path.join(dirpath, k), "wb") as fo:
             pickle.dump(v, fo)
 
-    model = Seq2Seq(src_lang, trg_lang).to(device)
+    model = Seq2Seq(src_lang, trg_lang, **vars(args)).to(device)
 
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",
@@ -446,28 +464,18 @@ def train(
         mode="min",
     )
 
-    lim_ratio = 1.00
-    trainer = pl.Trainer(
-        default_root_dir=dirpath,  # set directory to save weights, logs, etc ...
-        gpus=1,  # num gpus to use if using gpu
-        fast_dev_run=False,  # set to True to quickly verify your code works
-        progress_bar_refresh_rate=20,  # change to 20 if using google colab
-        gradient_clip_val=1,
-        max_epochs=8,
-        limit_train_batches=lim_ratio,  # percentage of train data to use
-        limit_val_batches=lim_ratio,  # percentage of validation data to use
-        limit_test_batches=lim_ratio,  # percentage of test data to use
-        val_check_interval=0.2,  # run validation after every n percent of an epoch
-        precision=32,  # use 16 for half point precision
+    trainer = pl.Trainer.from_argparse_args(
+        args,
+        default_root_dir=dirpath,
         callbacks=[checkpoint_callback],
     )
     trainer.fit(model, train_dataloader, val_dataloader)
     trainer.test(model, val_dataloader)
 
-    test_set_pairs = load_file("data/test_set.txt")
-    final_score = evaluate(model, test_set_pairs, batch_size=batch_size)
-    with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
-        fo.write(f"{final_score:.4f}")
+    if train_pairs:
+        final_score = evaluate(model, test_pairs, batch_size=batch_size)
+        with open(os.path.join(dirpath, "eval.txt"), "w") as fo:
+            fo.write(f"{final_score:.4f}")
 
     return model
 
@@ -514,12 +522,29 @@ def load_model(dirpath, model_ckpt="model.ckpt"):
 
 
 if __name__ == "__main__":
-    # TODO: add cli for model hparams and trainer hparams and program hparams
-    parser = argparse.ArgumentParser("Train the models.")
-    parser.add_argument("--file_path", type=str, default="data/train_set.txt")
+    parser = argparse.ArgumentParser("Train the model.")
+    parser.add_argument("dirpath", type=str, default="models/best")
+    parser.add_argument("--train_path", type=str, default="data/train_set.txt")
+    parser.add_argument("--test_path", type=str, default="data/test_set.txt")
+    parser.add_argument("--train_val_split_ratio", type=float, default=0.95)
+    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--num_workers", type=int, default=8)
+    parser.add_argument("--seed", type=int, default=1234)
+    parser = Seq2Seq.add_model_specific_args(parser)
+    parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
 
     base_dirpath = "models/best"
     os.makedirs(base_dirpath, exist_ok=True)
-    train_set_pairs = load_file(args.file_path)
-    train(train_set_pairs, base_dirpath, batch_size=512)
+    train_set_pairs = load_file(args.train_path)
+    test_set_pairs = load_file(args.test_path)
+    train(
+        base_dirpath,
+        train_set_pairs,
+        test_pairs=test_set_pairs,
+        train_val_split_ratio=args.train_val_split_ratio,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+        seed=args.seed,
+        args=args,
+    )
