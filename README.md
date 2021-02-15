@@ -27,7 +27,7 @@ python train.py
 
 Evaluate model on test set:
 ```
-python main.py models/best_model
+python main.py models/best
 ```
 
 Run unit tests:

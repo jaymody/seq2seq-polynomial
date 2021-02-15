@@ -515,7 +515,7 @@ if __name__ == "__main__":
     parser.add_argument("--file_path", type=str, default="data/train_set.txt")
     args = parser.parse_args()
 
-    base_dirpath = "models/pbatch_run"
+    base_dirpath = "models/best"
     os.makedirs(base_dirpath, exist_ok=True)
     train_set_pairs = load_file(args.file_path)
-    train(train_set_pairs, base_dirpath)
+    train(train_set_pairs, base_dirpath, batch_size=512)
