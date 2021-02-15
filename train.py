@@ -4,6 +4,7 @@ import random
 import argparse
 
 import torch
+import numpy as np
 import torch.nn as nn
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
@@ -236,6 +237,112 @@ class Seq2Seq(pl.LightningModule):
         pred_sentence = self.trg_lang.words_to_sentence(pred_words)
 
         return pred_sentence, pred_words, attention
+
+    def predict(self, sentences, max_len=31, batch_size=128, num_workers=1):
+        """Efficiently predict a list of sentences"""
+        pred_tensors = [
+            sentence_to_tensor(sentence, self.src_lang)
+            for sentence in tqdm(sentences, desc="creating prediction tensors")
+        ]
+
+        collate_fn = Collater(self.src_lang, predict=True)
+        pred_dataloader = DataLoader(
+            SimpleDataset(pred_tensors),
+            batch_size=batch_size,
+            collate_fn=collate_fn,
+            num_workers=num_workers,
+        )
+
+        sentences = []
+        words = []
+        attention = []
+        for batch in tqdm(pred_dataloader, desc="predict batch num"):
+            preds = self.predict_batch(batch.to(device), max_len)
+            pred_sentences, pred_words, pred_attention = preds
+            sentences.extend(pred_sentences)
+            words.extend(pred_words)
+            attention.extend(pred_attention)
+
+        # sentences = [num pred sentences]
+        # words = [num pred sentences, trg len]
+        # attention = [num pred sentences, n heads, trg len, src len]
+
+        return sentences, words, attention
+
+    def predict_batch(self, batch, max_len=31):
+        """Predicts on a batch of src_tensors."""
+        # batch = src_tensor when predicting = [batch_size, src len]
+
+        src_tensor = batch
+        src_mask = self.make_src_mask(batch)
+
+        # src_mask = [batch size, 1, 1, src len]
+
+        enc_src = self.encoder(src_tensor, src_mask)
+
+        # enc_src = [batch size, src len, hid dim]
+
+        trg_indexes = [[self.trg_lang.SOS_idx] for _ in range(len(batch))]
+
+        # trg_indexes = [batch_size, cur trg len = 1]
+
+        trg_tensor = torch.LongTensor(trg_indexes).to(self.device)
+
+        # trg_tensor = [batch_size, cur trg len = 1]
+        # cur trg len increases during the for loop up to the max len
+
+        for _ in range(max_len):
+
+            trg_mask = self.make_trg_mask(trg_tensor)
+
+            # trg_mask = [batch size, 1, cur trg len, cur trg len]
+
+            output, attention = self.decoder(trg_tensor, enc_src, trg_mask, src_mask)
+
+            # output = [batch size, cur trg len, output dim]
+
+            preds = output.argmax(2)[:, -1].reshape(-1, 1)
+
+            # preds = [batch_size, 1]
+
+            trg_tensor = torch.cat((trg_tensor, preds), dim=-1)
+
+            # trg_tensor = [batch_size, cur trg len], cur trg len increased by 1
+
+        src_tensor = src_tensor.detach().cpu().numpy()
+        trg_tensor = trg_tensor.detach().cpu().numpy()
+        attention = attention.detach().cpu().numpy()
+
+        pred_words = []
+        pred_sentences = []
+        pred_attention = []
+        for src_indexes, trg_indexes, attn in zip(src_tensor, trg_tensor, attention):
+            # trg_indexes = [trg len = max len (filled with eos if max len not needed)]
+            # src_indexes = [src len = len of longest sentence (padded if not longest)]
+
+            # indexes where first eos tokens appear
+            src_eosi = np.where(src_indexes == self.src_lang.EOS_idx)[0][0]
+            trg_eosi = np.where(trg_indexes == self.trg_lang.EOS_idx)[0][0]
+
+            # cut target indexes up to first eos token and also exclude sos token
+            trg_indexes = trg_indexes[1:trg_eosi]
+
+            # attn = [n heads, trg len=max len, src len=max len of sentence in batch]
+            # we want to keep n heads, but we'll cut trg len and src len up to
+            # their first eos token
+            attn = attn[:, :trg_eosi, :src_eosi]  # cut attention for trg eos tokens
+
+            words = [self.trg_lang.index2word[index] for index in trg_indexes]
+            sentence = self.trg_lang.words_to_sentence(words)
+            pred_words.append(words)
+            pred_sentences.append(sentence)
+            pred_attention.append(attn)
+
+        # pred_sentences = [batch_size]
+        # pred_words = [batch_size, trg len]
+        # attention = [batch size, n heads, trg len (varies), src len (varies)]
+
+        return pred_sentences, pred_words, pred_attention
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
