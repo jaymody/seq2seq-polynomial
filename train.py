@@ -321,7 +321,11 @@ class Seq2Seq(pl.LightningModule):
 
             # indexes where first eos tokens appear
             src_eosi = np.where(src_indexes == self.src_lang.EOS_idx)[0][0]
-            trg_eosi = np.where(trg_indexes == self.trg_lang.EOS_idx)[0][0]
+            _trg_eosi_arr = np.where(trg_indexes == self.trg_lang.EOS_idx)[0]
+            if len(_trg_eosi_arr) > 0:  # check that an eos token exists in trg
+                trg_eosi = _trg_eosi_arr[0]
+            else:
+                trg_eosi = len(trg_indexes)
 
             # cut target indexes up to first eos token and also exclude sos token
             trg_indexes = trg_indexes[1:trg_eosi]
