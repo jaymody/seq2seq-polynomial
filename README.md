@@ -11,7 +11,7 @@ Implement a deep learning model that learns to expand single variable polynomial
 The expanded expressions are commutable, but only the form provided is considered correct.
 
 ## Model Accuracy
-The model is evaluated against a strict string equality between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of`0.88`.
+The model is evaluated against a strict string equality between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of `0.88`.
 
 
 ## Instructions

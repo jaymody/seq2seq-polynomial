@@ -536,7 +536,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_dirpath = "models/best"
-    os.makedirs(base_dirpath, exist_ok=True)
+    os.makedirs(base_dirpath, exist_ok=False)
     train_set_pairs = load_file(args.train_path)
     test_set_pairs = load_file(args.test_path)
     train(
