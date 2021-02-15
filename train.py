@@ -82,6 +82,7 @@ class Seq2Seq(pl.LightningModule):
         self,
         src_lang,
         trg_lang,
+        max_len=32,
         hid_dim=256,
         enc_layers=3,
         dec_layers=3,
@@ -187,7 +188,7 @@ class Seq2Seq(pl.LightningModule):
 
         return output, attention
 
-    def predict_sentence(self, sentence, max_len=31):
+    def predict_sentence(self, sentence):
         """Predicts a single sentence."""
         src_indexes = [
             self.src_lang.word2index[word]
@@ -213,7 +214,7 @@ class Seq2Seq(pl.LightningModule):
 
         # trg_indexes = [cur trg len = 1]
 
-        for _ in range(max_len):
+        for _ in range(self.hparams.max_len):
             trg_tensor = torch.LongTensor(trg_indexes).unsqueeze(0).to(self.device)
 
             # trg_tensor = [1, cur trg len]
@@ -238,7 +239,7 @@ class Seq2Seq(pl.LightningModule):
 
         return pred_sentence, pred_words, attention
 
-    def predict(self, sentences, max_len=31, batch_size=128, num_workers=1):
+    def predict(self, sentences, batch_size=128, num_workers=1):
         """Efficiently predict a list of sentences"""
         pred_tensors = [
             sentence_to_tensor(sentence, self.src_lang)
@@ -257,7 +258,7 @@ class Seq2Seq(pl.LightningModule):
         words = []
         attention = []
         for batch in tqdm(pred_dataloader, desc="predict batch num"):
-            preds = self.predict_batch(batch.to(device), max_len)
+            preds = self.predict_batch(batch.to(device))
             pred_sentences, pred_words, pred_attention = preds
             sentences.extend(pred_sentences)
             words.extend(pred_words)
@@ -269,7 +270,7 @@ class Seq2Seq(pl.LightningModule):
 
         return sentences, words, attention
 
-    def predict_batch(self, batch, max_len=31):
+    def predict_batch(self, batch):
         """Predicts on a batch of src_tensors."""
         # batch = src_tensor when predicting = [batch_size, src len]
 
@@ -291,7 +292,7 @@ class Seq2Seq(pl.LightningModule):
         # trg_tensor = [batch_size, cur trg len = 1]
         # cur trg len increases during the for loop up to the max len
 
-        for _ in range(max_len):
+        for _ in range(self.hparams.max_len):
 
             trg_mask = self.make_trg_mask(trg_tensor)
 
@@ -397,6 +398,7 @@ class Seq2Seq(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         _parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
+        _parser.add_argument("--max_len", type=int, default=32)
         _parser.add_argument("--hid_dim", type=int, default=256)
         _parser.add_argument("--enc_layers", type=int, default=3)
         _parser.add_argument("--dec_layers", type=int, default=3)
