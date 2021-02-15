@@ -186,7 +186,8 @@ class Seq2Seq(pl.LightningModule):
 
         return output, attention
 
-    def predict(self, sentence, max_len=31):
+    def predict_sentence(self, sentence, max_len=31):
+        """Predicts a single sentence."""
         src_indexes = [
             self.src_lang.word2index[word]
             for word in self.src_lang.sentence_to_words(sentence)
