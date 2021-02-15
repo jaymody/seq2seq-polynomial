@@ -6,8 +6,8 @@ import numpy as np
 
 
 def load_file(file_path):
-    data = open(file_path, "r").readlines()
-    pairs = [line.strip().split("=") for line in data]
+    with open(file_path) as fi:
+        pairs = [line.strip().split("=") for line in fi]
     return pairs
 
 
