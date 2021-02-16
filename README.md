@@ -61,3 +61,98 @@ python -m unittest tests.py
 The model is evaluated against a **strict string equality** between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of `0.915`.
 
 ![loss](loss.png)
+
+Here are some example translations:
+```
+--- example 1 ---
+factored:   3*n*(-3*n-32)
+expanded:   -9*n**2-96*n
+prediction: -9*n**2-96*n
+equal:      True
+
+--- example 2 ---
+factored:   (-k-32)*(5*k-28)
+expanded:   -5*k**2-132*k+896
+prediction: -5*k**2-132*k+896
+equal:      True
+
+--- example 3 ---
+factored:   (-3*n-19)*(2*n-29)
+expanded:   -6*n**2+49*n+551
+prediction: -6*n**2+49*n+551
+equal:      True
+
+--- example 4 ---
+factored:   (-4*i-22)*(3*i-31)
+expanded:   -12*i**2+58*i+682
+prediction: -12*i**2+58*i+682
+equal:      True
+
+--- example 5 ---
+factored:   2*n**2
+expanded:   2*n**2
+prediction: 2*n**2
+equal:      True
+
+--- example 6 ---
+factored:   (t-24)*(8*t+15)
+expanded:   8*t**2-177*t-360
+prediction: 8*t**2-177*t-360
+equal:      True
+
+--- example 7 ---
+factored:   (y-24)*(7*y-27)
+expanded:   7*y**2-195*y+648
+prediction: 7*y**2-195*y+648
+equal:      True
+
+--- example 8 ---
+factored:   5*s*(24-3*s)
+expanded:   -15*s**2+120*s
+prediction: -15*s**2+120*s
+equal:      True
+
+--- example 9 ---
+factored:   3*x*(x-29)
+expanded:   3*x**2-87*x
+prediction: 3*x**2-87*x
+equal:      True
+
+--- example 10 ---
+factored:   7*s*(-7*s-8)
+expanded:   -49*s**2-56*s
+prediction: -49*s**2-56*s
+equal:      True
+
+...
+
+--- example 12 ---
+factored:   (-6*n-9)*(-4*n-7)
+expanded:   24*n**2+78*n+63
+prediction: 24*n**2+70*n+63
+equal:      False
+
+...
+
+--- example 44 ---
+factored:   (25-6*z)*(z+11)
+expanded:   -6*z**2-41*z+275
+prediction: -6*z**2-31*z+275
+equal:      False
+
+...
+
+--- example 69 ---
+factored:   (-3*x-23)*(3*x-22)
+expanded:   -9*x**2-3*x+506
+prediction: -9*x**2-13*x+506
+equal:      False
+
+...
+
+--- example 93 ---
+factored:   (2*k+9)*(7*k-12)
+expanded:   14*k**2+39*k-108
+prediction: 14*k**2+49*k-108
+equal:      False
+```
