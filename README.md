@@ -58,7 +58,7 @@ python -m unittest tests.py
 ```
 
 ## Model Accuracy
-The model is evaluated against a **strict string equality** between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of `0.915`.
+The model is evaluated against a **strict string equality** between the predicted target sequence and the groud truth target sequence. The model achieved an accuracy of `0.971` (trained on 16 epochs).
 
 ![loss](loss.png)
 
